@@ -8,6 +8,7 @@
  * @param {Object} res - The Express response object.
  * @param {Function} next - The next middleware function.
  */
+// eslint-disable-next-line no-unused-vars
 function errorHandler(err, req, res, next) {
   console.error('[Error Handler]:', err.message || err);
 

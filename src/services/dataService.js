@@ -10,7 +10,7 @@
  */
 function getCrowdData() {
   const gates = ['Gate A (North)', 'Gate B (East)', 'Gate C (South)', 'Gate D (West)'];
-  return gates.map(gate => ({
+  return gates.map((gate) => ({
     gate,
     crowdLevel: Math.floor(Math.random() * 100),
     estimatedWaitTime: Math.floor(Math.random() * 30)
@@ -37,12 +37,20 @@ function getEcoTransitData() {
 function getWayfindingData(section) {
   const normalized = section.toUpperCase().trim();
   const routes = {
-    'A1': { description: 'Take the North ramp, level 2, turn left.', accessible: true },
-    'B2': { description: 'Enter East gate, use elevator 3 to level 4.', accessible: true },
-    'C3': { description: 'South gate entrance, straight ahead past the food court.', accessible: false }
+    A1: { description: 'Take the North ramp, level 2, turn left.', accessible: true },
+    B2: { description: 'Enter East gate, use elevator 3 to level 4.', accessible: true },
+    C3: {
+      description: 'South gate entrance, straight ahead past the food court.',
+      accessible: false
+    }
   };
-  
-  return routes[normalized] || { description: 'Route information unavailable for this section.', accessible: false };
+
+  return (
+    routes[normalized] || {
+      description: 'Route information unavailable for this section.',
+      accessible: false
+    }
+  );
 }
 
 module.exports = {

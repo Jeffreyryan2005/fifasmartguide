@@ -8,17 +8,16 @@ const aiService = require('../src/services/aiService');
 jest.mock('../src/services/aiService');
 
 describe('API Routes & Middlewares', () => {
-  
   describe('GET /api/crowd-data', () => {
     it('should return simulated crowd data with a timestamp', async () => {
       const res = await request(app).get('/api/crowd-data');
-      
+
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('success', true);
       expect(res.body).toHaveProperty('timestamp');
       expect(res.body).toHaveProperty('data');
       expect(Array.isArray(res.body.data)).toBeTruthy();
-      
+
       const firstGate = res.body.data[0];
       expect(firstGate).toHaveProperty('gate');
       expect(firstGate).toHaveProperty('crowdLevel');
@@ -29,12 +28,12 @@ describe('API Routes & Middlewares', () => {
   describe('GET /api/eco-transit', () => {
     it('should return simulated eco-transit data', async () => {
       const res = await request(app).get('/api/eco-transit');
-      
+
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('success', true);
       expect(res.body).toHaveProperty('data');
       expect(Array.isArray(res.body.data)).toBeTruthy();
-      
+
       const transit = res.body.data[0];
       expect(transit).toHaveProperty('type');
       expect(transit).toHaveProperty('status');
@@ -64,7 +63,7 @@ describe('API Routes & Middlewares', () => {
     });
 
     it('should return a reply for a valid message', async () => {
-      const mockReply = "Hello! I am your eco-friendly assistant.";
+      const mockReply = 'Hello! I am your eco-friendly assistant.';
       aiService.generateResponse.mockResolvedValue(mockReply);
 
       const res = await request(app)
@@ -89,9 +88,7 @@ describe('API Routes & Middlewares', () => {
     });
 
     it('should trigger error handler (400) if language is unsupported', async () => {
-      const res = await request(app)
-        .post('/api/chat')
-        .send({ message: 'Hi', language: 'Klingon' });
+      const res = await request(app).post('/api/chat').send({ message: 'Hi', language: 'Klingon' });
 
       expect(res.statusCode).toEqual(400);
       expect(res.body).toHaveProperty('success', false);
@@ -99,21 +96,17 @@ describe('API Routes & Middlewares', () => {
     });
 
     it('should trigger error handler (400) if message is missing', async () => {
-      const res = await request(app)
-        .post('/api/chat')
-        .send({ language: 'English' });
+      const res = await request(app).post('/api/chat').send({ language: 'English' });
 
       expect(res.statusCode).toEqual(400);
       expect(res.body).toHaveProperty('success', false);
       expect(res.body).toHaveProperty('error', 'Invalid or missing message parameter.');
     });
-    
+
     it('should trigger error handler (500) on AI service failure', async () => {
       aiService.generateResponse.mockRejectedValue(new Error('API failure'));
 
-      const res = await request(app)
-        .post('/api/chat')
-        .send({ message: 'Hi there' });
+      const res = await request(app).post('/api/chat').send({ message: 'Hi there' });
 
       expect(res.statusCode).toEqual(500);
       expect(res.body).toHaveProperty('success', false);
@@ -128,5 +121,4 @@ describe('API Routes & Middlewares', () => {
       expect(res.headers['content-type']).toMatch(/html/);
     });
   });
-
 });

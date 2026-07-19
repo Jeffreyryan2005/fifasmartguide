@@ -7,7 +7,7 @@ const { GoogleGenAI } = require('@google/genai');
  */
 const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) {
-    console.error('CRITICAL: GEMINI_API_KEY is not set in the environment variables.');
+  console.error('CRITICAL: GEMINI_API_KEY is not set in the environment variables.');
 }
 const ai = new GoogleGenAI({ apiKey });
 
@@ -16,7 +16,7 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 min
 
 /**
  * Generates a response using the Gemini model.
- * 
+ *
  * @param {string} userMessage - The query from the fan.
  * @param {string} language - The preferred output language.
  * @returns {Promise<string>} The generated response tailored to FIFA World Cup 2026.
@@ -37,33 +37,33 @@ The user wants the response in ${language}. If the language is not English, ensu
 Keep responses brief (max 2-3 short paragraphs) to ensure readability on mobile devices in a crowded stadium.`;
 
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: [
-            {
-                role: 'user',
-                parts: [{ text: userMessage }]
-            }
-        ],
-        config: {
-            systemInstruction: systemInstruction,
-            temperature: 0.7,
-            maxOutputTokens: 500,
+      model: 'gemini-2.5-flash',
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: userMessage }]
         }
+      ],
+      config: {
+        systemInstruction: systemInstruction,
+        temperature: 0.7,
+        maxOutputTokens: 500
+      }
     });
 
     if (response.text) {
-        cache.set(key, { value: response.text, time: Date.now() });
-        return response.text;
+      cache.set(key, { value: response.text, time: Date.now() });
+      return response.text;
     } else {
-        return 'I am sorry, but I could not generate a response at this time. Please try again.';
+      return 'I am sorry, but I could not generate a response at this time. Please try again.';
     }
-    
   } catch (error) {
     console.error('Error generating AI response:', error);
-    throw new Error('Failed to communicate with AI service.');
+    throw error;
   }
 }
 
 module.exports = {
-  generateResponse
+  generateResponse,
+  _cache: cache
 };

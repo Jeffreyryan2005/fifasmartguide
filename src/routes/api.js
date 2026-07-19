@@ -15,7 +15,7 @@ const ALLOWED_LANGUAGES = ['English', 'Spanish', 'French', 'Arabic', 'Portuguese
 router.post('/chat', async (req, res, next) => {
   try {
     const { message, language } = req.body;
-    
+
     if (!message || typeof message !== 'string') {
       const error = new Error('Invalid or missing message parameter.');
       error.status = 400;
@@ -74,4 +74,3 @@ router.get('/wayfinding/:seatSection', (req, res) => {
 });
 
 module.exports = router;
-
