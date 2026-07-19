@@ -242,9 +242,25 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchCrowdData();
     fetchEcoData();
     
-    // Simulate real-time updates every 30 seconds
-    setInterval(() => {
-        fetchCrowdData();
-        fetchEcoData();
-    }, 30000);
+    // Efficiency Fix: Pause polling when tab isn't visible
+    let pollInterval;
+
+    function startPolling() {
+        pollInterval = setInterval(() => {
+            fetchCrowdData();
+            fetchEcoData();
+        }, 30000);
+    }
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            clearInterval(pollInterval);
+        } else {
+            fetchCrowdData();
+            fetchEcoData();
+            startPolling();
+        }
+    });
+
+    startPolling();
 });

@@ -11,6 +11,9 @@ if (!apiKey) {
 }
 const ai = new GoogleGenAI({ apiKey });
 
+const cache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5 min
+
 /**
  * Generates a response using the Gemini model.
  * 
@@ -20,6 +23,12 @@ const ai = new GoogleGenAI({ apiKey });
  */
 async function generateResponse(userMessage, language = 'English') {
   try {
+    const key = `${language}:${userMessage.toLowerCase().trim()}`;
+    const cached = cache.get(key);
+    if (cached && Date.now() - cached.time < CACHE_TTL) {
+      return cached.value;
+    }
+
     const systemInstruction = `You are the official 'FIFA 26 Smart Guide' assistant for the FIFA World Cup 2026.
 Your primary role is to assist fans with stadium operations, navigation, accessibility, transportation, sustainability, and general tournament information.
 You must be helpful, concise, and friendly, providing real-time operational intelligence where applicable.
@@ -43,6 +52,7 @@ Keep responses brief (max 2-3 short paragraphs) to ensure readability on mobile 
     });
 
     if (response.text) {
+        cache.set(key, { value: response.text, time: Date.now() });
         return response.text;
     } else {
         return 'I am sorry, but I could not generate a response at this time. Please try again.';

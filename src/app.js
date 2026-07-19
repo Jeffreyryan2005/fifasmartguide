@@ -4,6 +4,7 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 const path = require('path');
 const apiRoutes = require('./routes/api');
 const errorHandler = require('./middlewares/errorHandler');
@@ -55,8 +56,13 @@ app.use('/api', limiter);
 
 /**
  * Serve Static Files (Frontend)
+ * Efficiency Fix: Added caching headers
  */
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(compression());
+app.use(express.static(path.join(__dirname, '../public'), {
+  maxAge: '1d',
+  etag: true
+}));
 
 /**
  * API Routes
