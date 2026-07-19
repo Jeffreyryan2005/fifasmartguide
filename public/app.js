@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const seatInput = document.getElementById('seat-input');
   const wayfindingResult = document.getElementById('wayfinding-result');
 
-  const submitBtn = document.querySelector('.btn-submit');
+  const submitBtn = chatForm.querySelector('.btn-submit');
 
   // State
   let isTtsEnabled = false;
