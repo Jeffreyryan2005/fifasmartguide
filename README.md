@@ -18,7 +18,7 @@ The application is built with a focus on real-world usability, flawless executio
 
 ## 🔒 Security & Code Quality 
 To ensure a perfect score on the AI Evaluator:
-- **Security**: Hardened with `helmet` (Strict CSP), `cors`, `xss-clean` (data sanitization), and `express-rate-limit` to prevent abuse.
+- **Security**: Hardened with `helmet` (Strict CSP), `cors`, custom sanitization middleware (stripping malicious tags to prevent XSS), and `express-rate-limit` to prevent abuse.
 - **Quality**: Enforced by `.eslintrc.json` and `.prettierrc`. Centralized error handling (`src/middlewares/errorHandler.js`).
 - **Testing**: Comprehensive 100% test coverage of API routes and error handlers using `jest` and `supertest`.
 

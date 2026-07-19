@@ -3,6 +3,9 @@
 const express = require('express');
 const router = express.Router();
 const aiService = require('../services/aiService');
+const dataService = require('../services/dataService');
+
+const ALLOWED_LANGUAGES = ['English', 'Spanish', 'French', 'Arabic', 'Portuguese'];
 
 /**
  * @route POST /api/chat
@@ -19,7 +22,20 @@ router.post('/chat', async (req, res, next) => {
       throw error;
     }
 
-    const response = await aiService.generateResponse(message, language || 'English');
+    if (message.length > 500) {
+      const error = new Error('Message too long (max 500 characters).');
+      error.status = 400;
+      throw error;
+    }
+
+    const requestedLang = language || 'English';
+    if (!ALLOWED_LANGUAGES.includes(requestedLang)) {
+      const error = new Error('Unsupported language selected.');
+      error.status = 400;
+      throw error;
+    }
+
+    const response = await aiService.generateResponse(message, requestedLang);
     res.json({ success: true, reply: response });
   } catch (error) {
     next(error); // Pass to global error handler
@@ -32,29 +48,29 @@ router.post('/chat', async (req, res, next) => {
  * @access Public
  */
 router.get('/crowd-data', (req, res) => {
-  const gates = ['Gate A (North)', 'Gate B (East)', 'Gate C (South)', 'Gate D (West)'];
-  const data = gates.map(gate => ({
-    gate,
-    crowdLevel: Math.floor(Math.random() * 100), // Percentage (0-100)
-    estimatedWaitTime: Math.floor(Math.random() * 30) // Minutes (0-30)
-  }));
-  
+  const data = dataService.getCrowdData();
   res.json({ success: true, timestamp: new Date().toISOString(), data });
 });
 
 /**
  * @route GET /api/eco-transit
- * @desc Returns simulated real-time eco-friendly transport schedules (Sustainability feature).
+ * @desc Returns simulated real-time eco-friendly transport schedules.
  * @access Public
  */
 router.get('/eco-transit', (req, res) => {
-  const transitOptions = [
-    { type: 'Electric Bus (Line 42)', status: 'Arriving in 5 mins', co2Saved: '15kg' },
-    { type: 'Metro (Green Line)', status: 'Arriving in 12 mins', co2Saved: '30kg' },
-    { type: 'Shared E-Bikes', status: '45 available nearby', co2Saved: '100% Zero Emissions' }
-  ];
-  
-  res.json({ success: true, timestamp: new Date().toISOString(), data: transitOptions });
+  const data = dataService.getEcoTransitData();
+  res.json({ success: true, timestamp: new Date().toISOString(), data });
+});
+
+/**
+ * @route GET /api/wayfinding/:seatSection
+ * @desc Returns accessible route info for a specific seat section.
+ * @access Public
+ */
+router.get('/wayfinding/:seatSection', (req, res) => {
+  const { seatSection } = req.params;
+  const data = dataService.getWayfindingData(seatSection);
+  res.json({ success: true, data });
 });
 
 module.exports = router;

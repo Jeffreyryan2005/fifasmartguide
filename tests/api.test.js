@@ -42,6 +42,22 @@ describe('API Routes & Middlewares', () => {
     });
   });
 
+  describe('GET /api/wayfinding/:seatSection', () => {
+    it('should return wayfinding data for a valid section', async () => {
+      const res = await request(app).get('/api/wayfinding/A1');
+      expect(res.statusCode).toEqual(200);
+      expect(res.body).toHaveProperty('success', true);
+      expect(res.body.data).toHaveProperty('description');
+      expect(res.body.data).toHaveProperty('accessible', true);
+    });
+
+    it('should return fallback data for unknown section', async () => {
+      const res = await request(app).get('/api/wayfinding/Z99');
+      expect(res.statusCode).toEqual(200);
+      expect(res.body.data.accessible).toBe(false);
+    });
+  });
+
   describe('POST /api/chat', () => {
     beforeEach(() => {
       jest.clearAllMocks();
@@ -59,6 +75,27 @@ describe('API Routes & Middlewares', () => {
       expect(res.body).toHaveProperty('success', true);
       expect(res.body).toHaveProperty('reply', mockReply);
       expect(aiService.generateResponse).toHaveBeenCalledWith('Hi there', 'English');
+    });
+
+    it('should trigger error handler (400) if message exceeds 500 characters', async () => {
+      const longMessage = 'A'.repeat(501);
+      const res = await request(app)
+        .post('/api/chat')
+        .send({ message: longMessage, language: 'English' });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body).toHaveProperty('error', 'Message too long (max 500 characters).');
+    });
+
+    it('should trigger error handler (400) if language is unsupported', async () => {
+      const res = await request(app)
+        .post('/api/chat')
+        .send({ message: 'Hi', language: 'Klingon' });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body).toHaveProperty('error', 'Unsupported language selected.');
     });
 
     it('should trigger error handler (400) if message is missing', async () => {

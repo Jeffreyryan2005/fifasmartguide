@@ -18,7 +18,7 @@ function errorHandler(err, req, res, next) {
     success: false,
     error: message,
     // Provide stack trace only if not in production for security
-    stack: process.env.NODE_ENV === 'production' ? '🥞' : err.stack
+    stack: process.env.NODE_ENV === 'production' ? undefined : err.stack
   });
 }
 
