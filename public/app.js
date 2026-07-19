@@ -1,3 +1,5 @@
+'use strict';
+
 document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     const chatForm = document.getElementById('chat-form');
@@ -6,14 +8,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const langSelect = document.getElementById('lang-select');
     const themeToggle = document.getElementById('theme-toggle');
     const ttsToggle = document.getElementById('tts-toggle');
+    
+    // Dashboard Elements
     const crowdContainer = document.getElementById('crowd-data-container');
     const refreshCrowdBtn = document.getElementById('refresh-crowd');
+    const ecoContainer = document.getElementById('eco-data-container');
+    const refreshEcoBtn = document.getElementById('refresh-eco');
+    
     const submitBtn = document.querySelector('.btn-submit');
 
     // State
     let isTtsEnabled = false;
 
     // ----- ACCESSIBILITY & THEME -----
+    
     themeToggle.addEventListener('click', () => {
         document.body.classList.toggle('high-contrast');
         const isHC = document.body.classList.contains('high-contrast');
@@ -30,14 +38,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    /**
+     * Uses the Web Speech API to read text aloud if TTS is enabled.
+     * @param {string} text - The text to speak.
+     */
     function speakText(text) {
         if (!isTtsEnabled || !('speechSynthesis' in window)) return;
         
-        // Basic sanitization for TTS (remove markdown-like chars if any)
+        // Basic sanitization for TTS
         const cleanText = text.replace(/[*_#]/g, '');
         const utterance = new SpeechSynthesisUtterance(cleanText);
         
-        // Try to match language
         const lang = langSelect.value;
         const langMap = {
             'English': 'en-US',
@@ -51,16 +62,22 @@ document.addEventListener('DOMContentLoaded', () => {
         window.speechSynthesis.speak(utterance);
     }
 
-    // ----- CROWD DASHBOARD -----
+    // ----- DASHBOARDS -----
+
+    /**
+     * Fetches and renders crowd density data.
+     */
     async function fetchCrowdData() {
         try {
             refreshCrowdBtn.disabled = true;
             refreshCrowdBtn.style.opacity = '0.5';
             
             const res = await fetch('/api/crowd-data');
-            const { data } = await res.json();
+            const result = await res.json();
             
-            renderCrowdData(data);
+            if (result.success) {
+                renderCrowdData(result.data);
+            }
         } catch (error) {
             console.error('Error fetching crowd data:', error);
             crowdContainer.innerHTML = '<div class="loading-state" style="color:var(--error)">Failed to load data.</div>';
@@ -70,6 +87,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    /**
+     * Renders crowd data cards.
+     * @param {Array} data - Array of gate data objects.
+     */
     function renderCrowdData(data) {
         crowdContainer.innerHTML = '';
         data.forEach(gate => {
@@ -88,13 +109,64 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    /**
+     * Fetches and renders eco-transit data (Sustainability).
+     */
+    async function fetchEcoData() {
+        try {
+            refreshEcoBtn.disabled = true;
+            refreshEcoBtn.style.opacity = '0.5';
+            
+            const res = await fetch('/api/eco-transit');
+            const result = await res.json();
+            
+            if (result.success) {
+                renderEcoData(result.data);
+            }
+        } catch (error) {
+            console.error('Error fetching eco data:', error);
+            ecoContainer.innerHTML = '<div class="loading-state" style="color:var(--error)">Failed to load transit data.</div>';
+        } finally {
+            refreshEcoBtn.disabled = false;
+            refreshEcoBtn.style.opacity = '1';
+        }
+    }
+
+    /**
+     * Renders eco-transit data cards.
+     * @param {Array} data - Array of transit objects.
+     */
+    function renderEcoData(data) {
+        ecoContainer.innerHTML = '';
+        data.forEach(transit => {
+            const card = document.createElement('div');
+            card.className = 'gate-card';
+            card.setAttribute('role', 'region');
+            card.setAttribute('aria-label', `${transit.type} status`);
+            
+            card.innerHTML = `
+                <h3 style="color: var(--secondary)">${transit.type}</h3>
+                <div style="font-weight: 600; margin-bottom: 0.25rem;">${transit.status}</div>
+                <div class="wait-time">Co2 Saved: ${transit.co2Saved}</div>
+            `;
+            ecoContainer.appendChild(card);
+        });
+    }
+
     refreshCrowdBtn.addEventListener('click', fetchCrowdData);
+    refreshEcoBtn.addEventListener('click', fetchEcoData);
 
     // ----- CHAT INTERFACE -----
+
+    /**
+     * Appends a message to the chat history.
+     * @param {string} text - The message body.
+     * @param {boolean} isUser - Whether the message is from the user.
+     */
     function appendMessage(text, isUser = false) {
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${isUser ? 'user-msg' : 'system-msg'}`;
-        // Using textContent for security (prevents XSS)
+        // Using textContent for XSS protection
         const p = document.createElement('p');
         p.textContent = text;
         msgDiv.appendChild(p);
@@ -107,6 +179,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    /**
+     * Shows a typing indicator.
+     */
     function showLoading() {
         const loadingDiv = document.createElement('div');
         loadingDiv.className = 'message system-msg loading-msg';
@@ -116,6 +191,9 @@ document.addEventListener('DOMContentLoaded', () => {
         chatHistory.scrollTop = chatHistory.scrollHeight;
     }
 
+    /**
+     * Removes the typing indicator.
+     */
     function removeLoading() {
         const indicator = document.getElementById('loading-indicator');
         if (indicator) indicator.remove();
@@ -145,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             removeLoading();
 
-            if (res.ok) {
+            if (res.ok && data.success) {
                 appendMessage(data.reply);
             } else {
                 appendMessage(data.error || 'An error occurred. Please try again.');
@@ -160,8 +238,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Initialize Dashboard
+    // Initialize Dashboards
     fetchCrowdData();
+    fetchEcoData();
+    
     // Simulate real-time updates every 30 seconds
-    setInterval(fetchCrowdData, 30000);
+    setInterval(() => {
+        fetchCrowdData();
+        fetchEcoData();
+    }, 30000);
 });
